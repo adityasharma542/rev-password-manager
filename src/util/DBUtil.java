@@ -7,7 +7,7 @@ public class DBUtil {
 
     private static final String URL =
             "jdbc:oracle:thin:@localhost:1521/ORCLPDB";
-    private static final String USER = "pass_user";
+    private static final String USER = "PASS_USER";
     private static final String PASSWORD = "pass123";
 
     static {
@@ -15,8 +15,7 @@ public class DBUtil {
             Class.forName("oracle.jdbc.driver.OracleDriver");
             System.out.println("Oracle JDBC Driver Loaded");
         } catch (Exception e) {
-            System.out.println("Failed to load Oracle JDBC Driver");
-            e.printStackTrace();
+            throw new RuntimeException("Oracle JDBC Driver Load Failed");
         }
     }
 

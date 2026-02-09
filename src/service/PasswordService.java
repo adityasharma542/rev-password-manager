@@ -9,26 +9,27 @@ import util.EncryptionUtil;
 
 public class PasswordService {
 
-    // ADD PASSWORD
+    // ================= ADD PASSWORD =================
     public static void addPassword(int userId, String accountName, String password) {
         try {
             Connection con = DBUtil.getConnection();
 
-            String sql = "INSERT INTO passwords(user_id, account_name, account_password) VALUES (?,?,?)";
+            String sql = "INSERT INTO passwords (user_id, account_name, account_password) VALUES (?,?,?)";
             PreparedStatement ps = con.prepareStatement(sql);
+
             ps.setInt(1, userId);
             ps.setString(2, accountName);
             ps.setString(3, EncryptionUtil.encrypt(password));
 
             ps.executeUpdate();
-            System.out.println("Password added successfully");
+            System.out.println("Password added successfully ✅");
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // VIEW PASSWORDS
+    // ================= VIEW PASSWORDS =================
     public static void viewPasswords(int userId) {
         try {
             Connection con = DBUtil.getConnection();
@@ -39,13 +40,29 @@ public class PasswordService {
 
             ResultSet rs = ps.executeQuery();
 
+            boolean found = false;
+
             System.out.println("\nSaved Passwords:");
+            System.out.println("-------------------------------------------------");
+            System.out.printf("%-5s %-20s %-20s%n", "ID", "ACCOUNT", "PASSWORD");
+            System.out.println("-------------------------------------------------");
+
             while (rs.next()) {
-                System.out.println(
-                    "ID: " + rs.getInt("id") +
-                    " | Account: " + rs.getString("account_name") +
-                    " | Password: " + rs.getString("account_password")
-                );
+                found = true;
+
+                int id = rs.getInt("id");
+                String acc = rs.getString("account_name");
+
+                // 🔐 decrypt password before display
+                String decryptedPassword =
+                        EncryptionUtil.decrypt(rs.getString("account_password"));
+
+                System.out.printf("%-5d %-20s %-20s%n",
+                        id, acc, decryptedPassword);
+            }
+
+            if (!found) {
+                System.out.println("No saved passwords found.");
             }
 
         } catch (Exception e) {
@@ -53,7 +70,7 @@ public class PasswordService {
         }
     }
 
-    // DELETE PASSWORD
+    // ================= DELETE PASSWORD =================
     public static void deletePassword(int passwordId) {
         try {
             Connection con = DBUtil.getConnection();
@@ -63,10 +80,11 @@ public class PasswordService {
             ps.setInt(1, passwordId);
 
             int rows = ps.executeUpdate();
+
             if (rows > 0) {
-                System.out.println("Password deleted successfully");
+                System.out.println("Password deleted successfully ✅");
             } else {
-                System.out.println("Invalid password ID");
+                System.out.println("Invalid password ID ❌");
             }
 
         } catch (Exception e) {
