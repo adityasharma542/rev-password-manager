@@ -5,26 +5,25 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import util.OTPUtil;
+import util.DBUtil;
+import util.EncryptionUtil;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import util.DBUtil;
-import util.EncryptionUtil;
-
 public class UserService {
 
-    // LOG4J LOGGER
+    // ================= LOG4J LOGGER =================
     private static final Logger logger =
             LogManager.getLogger(UserService.class);
 
-    // REGISTER USER
+    // ================= REGISTER USER =================
     public static void register(String username, String password) {
         try {
             Connection con = DBUtil.getConnection();
 
             String sql =
-                "INSERT INTO users(username, master_password) VALUES (?, ?)";
+                    "INSERT INTO users(username, master_password) VALUES (?, ?)";
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, username);
             ps.setString(2, EncryptionUtil.encrypt(password));
@@ -40,13 +39,13 @@ public class UserService {
         }
     }
 
-    // LOGIN USER
+    // ================= LOGIN USER =================
     public static int login(String username, String password) {
         try {
             Connection con = DBUtil.getConnection();
 
             String sql =
-                "SELECT user_id FROM users WHERE username=? AND master_password=?";
+                    "SELECT user_id FROM users WHERE username=? AND master_password=?";
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, username);
             ps.setString(2, EncryptionUtil.encrypt(password));
@@ -69,13 +68,13 @@ public class UserService {
         }
     }
 
-    // ADD SECURITY QUESTION
+    // ================= ADD SECURITY QUESTION =================
     public static void addSecurityQuestion(int userId, String question, String answer) {
         try {
             Connection con = DBUtil.getConnection();
 
             String sql =
-                "INSERT INTO security_questions(user_id, question, answer) VALUES (?,?,?)";
+                    "INSERT INTO security_questions(user_id, question, answer) VALUES (?,?,?)";
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setInt(1, userId);
             ps.setString(2, question);
@@ -91,7 +90,7 @@ public class UserService {
         }
     }
 
-    // FORGOT PASSWORD WITH OTP (FINAL)
+    // ================= FORGOT PASSWORD WITH OTP =================
     public static void forgotPasswordWithOTP(
             String username,
             String answer,
@@ -102,9 +101,9 @@ public class UserService {
             Connection con = DBUtil.getConnection();
 
             String sql =
-                "SELECT u.user_id FROM users u " +
-                "JOIN security_questions s ON u.user_id = s.user_id " +
-                "WHERE u.username=? AND s.answer=?";
+                    "SELECT u.user_id FROM users u " +
+                            "JOIN security_questions s ON u.user_id = s.user_id " +
+                            "WHERE u.username=? AND s.answer=?";
 
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, username);
@@ -128,7 +127,7 @@ public class UserService {
             int userId = rs.getInt("user_id");
 
             String updateSql =
-                "UPDATE users SET master_password=? WHERE user_id=?";
+                    "UPDATE users SET master_password=? WHERE user_id=?";
             PreparedStatement ups = con.prepareStatement(updateSql);
             ups.setString(1, EncryptionUtil.encrypt(newPassword));
             ups.setInt(2, userId);
@@ -139,6 +138,34 @@ public class UserService {
 
         } catch (Exception e) {
             logger.error("Forgot password with OTP error for user: {}", username, e);
+        }
+    }
+
+    // ================= UPDATE PROFILE (NAME & EMAIL) =================
+    public static void updateProfile(int userId, String name, String email) {
+        try {
+            Connection con = DBUtil.getConnection();
+
+            String sql =
+                    "UPDATE users SET name=?, email=? WHERE user_id=?";
+            PreparedStatement ps = con.prepareStatement(sql);
+
+            ps.setString(1, name);
+            ps.setString(2, email);
+            ps.setInt(3, userId);
+
+            int rows = ps.executeUpdate();
+
+            if (rows > 0) {
+                logger.info("Profile updated for userId: {}", userId);
+                System.out.println("Profile updated successfully ✅");
+            } else {
+                logger.warn("Profile update failed for userId: {}", userId);
+                System.out.println("Profile update failed ❌");
+            }
+
+        } catch (Exception e) {
+            logger.error("Error updating profile for userId: {}", userId, e);
         }
     }
 }
